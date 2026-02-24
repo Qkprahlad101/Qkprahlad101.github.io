@@ -1,42 +1,103 @@
 /* =============================================
-   PREMIUM PORTFOLIO CSS - Prahlad Kumar
-   v2.0 — Responsive + Performance Optimised
+   PREMIUM PORTFOLIO CSS — Prahlad Kumar v3.0
    ============================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 /* ---------- CSS Variables ---------- */
 :root {
-    --accent-color: #00d2ff;
-    --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
-    --bg-dark: #0f172a;
-    --card-bg: rgba(30, 41, 59, 0.75);
-    --glass-bg: rgba(15, 23, 42, 0.95);
-    --glass-border: rgba(255, 255, 255, 0.15);
+    --accent: #00d2ff;
+    --accent2: #3a7bd5;
+    --accent-g: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+    --card-bg: rgba(30, 41, 59, 0.78);
+    --glass-bdr: rgba(255, 255, 255, .15);
     --phone-w: 30rem;
-    --phone-border: 8px;
-    --phone-radius: 40px;
+    --phone-br: 6px;
+    /* border width */
+    --phone-r: 40px;
+    /* border radius */
+    --phone-col: #1a1a1a;
 }
 
-/* ---------- Base ---------- */
+/* ===================== FONTS ===================== */
 body,
 input,
 select,
 textarea {
     font-family: 'Outfit', sans-serif !important;
-    letter-spacing: 0.02em;
+    letter-spacing: .02em;
 }
 
-#wrapper {
+/* ===================== ANIMATED BACKGROUND ===================== */
+/* Replaces bg image - pure CSS, zero network cost */
+#bg::after {
+    background-image: none !important;
+    background: radial-gradient(ellipse at 20% 50%, #0d2137 0%, #050d1a 60%) !important;
+}
+
+#bg::before {
     background-image:
-        radial-gradient(circle at top right, rgba(0, 210, 255, .10), transparent),
-        radial-gradient(circle at bottom left, rgba(58, 123, 213, .10), transparent) !important;
+        radial-gradient(circle at 15% 25%, rgba(0, 210, 255, .18) 0%, transparent 45%),
+        radial-gradient(circle at 80% 70%, rgba(58, 123, 213, .20) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(0, 50, 100, .30) 0%, transparent 70%) !important;
+    background-color: #050d1a !important;
+    animation: bgPulse 12s ease-in-out infinite alternate !important;
+    background-size: cover !important;
 }
 
-/* ---------- Header Logo ---------- */
+@keyframes bgPulse {
+    0% {
+        filter: brightness(0.85) hue-rotate(0deg);
+    }
+
+    50% {
+        filter: brightness(1.05) hue-rotate(8deg);
+    }
+
+    100% {
+        filter: brightness(0.90) hue-rotate(-5deg);
+    }
+}
+
+/* Floating particle dots overlay */
+#wrapper::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle, rgba(0, 210, 255, .55) 1px, transparent 1px),
+        radial-gradient(circle, rgba(58, 123, 213, .40) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255, 255, 255, .20) 1px, transparent 1px);
+    background-size: 180px 180px, 120px 120px, 90px 90px;
+    background-position: 0 0, 60px 60px, 30px 90px;
+    animation: particleDrift 30s linear infinite;
+    opacity: .6;
+}
+
+@keyframes particleDrift {
+    0% {
+        background-position: 0 0, 60px 60px, 30px 90px;
+    }
+
+    100% {
+        background-position: 180px 180px, 240px 240px, 120px 270px;
+    }
+}
+
+/* ===================== WRAPPER ===================== */
+#wrapper {
+    background-image: none !important;
+    /* handled by #bg::before above */
+    position: relative;
+    z-index: 3;
+}
+
+/* ===================== HEADER LOGO ===================== */
 #header .logo {
-    background: var(--accent-gradient);
-    box-shadow: 0 0 20px rgba(0, 210, 255, .5);
+    background: var(--accent-g);
+    box-shadow: 0 0 22px rgba(0, 210, 255, .55);
     border: none !important;
     position: relative;
     overflow: hidden;
@@ -63,7 +124,7 @@ textarea {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    animation: iconSlideshow 12s infinite;
+    animation: iconCycle 12s infinite;
     line-height: 5.5rem !important;
     will-change: opacity, transform;
 }
@@ -84,12 +145,12 @@ textarea {
     animation-delay: 9s;
 }
 
-@keyframes iconSlideshow {
+@keyframes iconCycle {
 
     0%,
     25% {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.8);
+        transform: translate(-50%, -50%) scale(.8);
     }
 
     5%,
@@ -106,98 +167,114 @@ textarea {
 
 #header .logo .icon:before {
     font-size: 2.2rem !important;
-    color: #ffffff;
+    color: #fff;
 }
 
-/* ---------- H1 Gradient ---------- */
+/* ===================== H1 GRADIENT ===================== */
 #header .content .inner h1 {
     font-weight: 700;
-    background: var(--accent-gradient);
+    background: var(--accent-g);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    letter-spacing: 0.3rem;
+    letter-spacing: .3rem;
 }
 
-/* =====================================================================
-   PHONE FRAME — the main article "modal" styled as an Android device
-   ===================================================================== */
+/* ===================== FOOTER ===================== */
+#footer .copyright,
+#footer .copyright a {
+    color: rgba(255, 255, 255, .75) !important;
+    text-shadow: 0 0 8px rgba(0, 210, 255, .4);
+    letter-spacing: .15rem;
+    font-size: .65rem;
+}
+
+#footer .copyright a:hover {
+    color: var(--accent) !important;
+}
+
+/* ===================== PHONE FRAME ===================== */
 #main article {
-    /* Layout */
     position: relative;
     width: var(--phone-w) !important;
     max-width: calc(100vw - 2rem) !important;
-    /* never wider than viewport */
     height: 85vh !important;
     max-height: 820px !important;
     min-height: 400px;
-    overflow: hidden !important;
-    /* clip scrollbar inside radius */
 
-    /* Appearance */
+    /* Phone shell */
     background: #000 !important;
-    border: var(--phone-border) solid #252525 !important;
-    border-radius: var(--phone-radius) !important;
+    border: var(--phone-br) solid var(--phone-col) !important;
+    border-radius: var(--phone-r) !important;
     box-shadow: 0 0 0 2px #3a3a3a, 0 30px 70px rgba(0, 0, 0, .85) !important;
-    padding: 2rem 1.2rem 3.5rem !important;
 
-    /* Performance */
+    /* ⚠️  overflow HIDDEN so scrollbar is clipped inside rounded corners */
+    overflow: hidden !important;
+    padding: 0 !important;
+    /* padding moved to inner .phone-content */
+
     contain: layout style;
     will-change: opacity, transform;
-    transition: background-color 0.5s ease 1.8s, opacity 0.325s ease-in-out, transform 0.325s ease-in-out !important;
+    transition:
+        background-color .5s ease 1.8s,
+        opacity .325s ease-in-out,
+        transform .325s ease-in-out !important;
 }
 
-/* Scrollable inner area — keeps scrollbar inside border-radius */
-#main article .article-inner {
+/* Active screen colour */
+#main article.active {
+    background: rgba(10, 16, 35, 0.97) !important;
+}
+
+/* ---------- Inner scroll container ---------- */
+/* All article children flow into this div (added by JS in portfolio.js) */
+.phone-content {
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 0 0.5rem;
+    padding: 2rem 1.4rem 3.6rem;
+    box-sizing: border-box;
     scrollbar-width: thin;
-    scrollbar-color: var(--accent-color) transparent;
+    scrollbar-color: var(--accent) rgba(255, 255, 255, .05);
 }
 
-#main article .article-inner::-webkit-scrollbar {
-    width: 3px;
+.phone-content::-webkit-scrollbar {
+    width: 4px;
 }
 
-#main article .article-inner::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-#main article .article-inner::-webkit-scrollbar-thumb {
-    background: var(--accent-color);
+.phone-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, .04);
     border-radius: 10px;
 }
 
-/* Active state: screen lights up navy-blue */
-#main article.active {
-    background: var(--glass-bg) !important;
+.phone-content::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
 }
 
-/* ---------- Punch-hole camera notch ---------- */
+/* ---------- Punch-hole camera ---------- */
 #main article::before {
     content: '';
     position: absolute;
-    top: 12px;
+    top: 14px;
     left: 50%;
     transform: translateX(-50%);
     width: 11px;
     height: 11px;
-    background: #080808;
+    background: #050505;
     border-radius: 50%;
     z-index: 110;
-    box-shadow: inset 0 0 3px rgba(255, 255, 255, .2);
+    box-shadow: inset 0 0 3px rgba(255, 255, 255, .15);
     pointer-events: none;
 }
 
-/* ---------- Boot Animation Overlay ---------- */
+/* ---------- Boot Animation ---------- */
 #main article::after {
     content: 'Prahlad Kumar';
     position: absolute;
     inset: 0;
     background: #000;
-    color: var(--accent-color);
+    color: var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -208,31 +285,32 @@ textarea {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    border-radius: calc(var(--phone-radius) - var(--phone-border));
+    border-radius: calc(var(--phone-r) - var(--phone-br));
+    letter-spacing: .2rem;
 }
 
 #main article.active::after {
     visibility: visible;
-    animation: phoneBoot 2s forwards;
+    animation: phoneBoot 1.8s forwards;
 }
 
 @keyframes phoneBoot {
     0% {
         opacity: 1;
-        font-size: 0.9rem;
-        color: #aaa;
+        font-size: .85rem;
+        color: #888;
     }
 
     35% {
         opacity: 1;
-        font-size: 0.9rem;
-        color: #aaa;
+        font-size: .85rem;
+        color: #888;
     }
 
-    50% {
+    52% {
         opacity: 1;
         font-size: 1.8rem;
-        color: var(--accent-color);
+        color: var(--accent);
     }
 
     88% {
@@ -246,12 +324,12 @@ textarea {
 }
 
 /* Content fades in after boot */
-#main article>* {
+#main article .phone-content {
     opacity: 0;
-    transition: opacity 0.5s ease 1.8s;
+    transition: opacity .5s ease 1.8s;
 }
 
-#main article.active>* {
+#main article.active .phone-content {
     opacity: 1;
 }
 
@@ -259,26 +337,27 @@ textarea {
 .status-bar {
     position: sticky;
     top: 0;
-    left: 0;
     width: 100%;
     height: 26px;
     padding: 0 28px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.68rem;
+    font-size: .68rem;
     color: #fff;
     z-index: 105;
     font-weight: 600;
-    background: transparent;
     flex-shrink: 0;
+    background: rgba(10, 16, 35, .6);
+    backdrop-filter: blur(4px);
+    margin-bottom: .5rem;
 }
 
 .status-icons {
     display: flex;
     gap: 7px;
     align-items: center;
-    font-size: 0.7rem;
+    font-size: .7rem;
 }
 
 /* ---------- Home Indicator ---------- */
@@ -287,61 +366,62 @@ textarea {
     height: 4px;
     background: rgba(255, 255, 255, .35);
     border-radius: 10px;
-    margin: 1.2rem auto 0;
+    margin: 1rem auto .5rem;
     display: block;
+    flex-shrink: 0;
 }
 
-/* ---------- Close button (keep inside phone) ---------- */
+/* ---------- Close button ---------- */
 #main article .close {
-    top: 0.9rem !important;
-    right: 0.9rem !important;
-    z-index: 110;
+    top: .9rem !important;
+    right: .9rem !important;
+    z-index: 115;
 }
 
-/* ---------- Article headings ---------- */
+/* ---------- Article Headings ---------- */
 #main article h2.major {
-    border-bottom: 2px solid var(--accent-color) !important;
+    border-bottom: 2px solid var(--accent) !important;
+    border-top: none !important;
     font-weight: 700;
-    margin-top: 0.5rem;
+    margin-top: .5rem;
     text-align: center;
     color: #fff !important;
 }
 
-/* NO border-top on sections — kills the horizontal white line */
-#main article h2.major,
-#main article *,
-#main article::before,
-#main article::after {
+/* Kill any stray border-top that causes the white line */
+#main article *:not(.exp-item) {
+    border-top: none !important;
+}
+
+.exp-item {
     border-top: none;
 }
 
-/* Re-apply only the underline we want */
-#main article h2.major {
-    border-bottom: 2px solid var(--accent-color) !important;
-}
+/* timeline uses border-left only */
 
-/* ---------- Cards ---------- */
+/* ===================== CARDS ===================== */
 .card {
     background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
+    border: 1px solid var(--glass-bdr) !important;
+    border-top: 1px solid var(--glass-bdr) !important;
     border-radius: 16px !important;
     overflow: hidden;
-    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
-    margin-bottom: 1.5rem;
+    transition: transform .25s ease, box-shadow .25s ease !important;
+    margin-bottom: 1.4rem;
     will-change: transform;
 }
 
 .card:hover {
     transform: translateY(-6px);
     box-shadow: 0 12px 28px rgba(0, 210, 255, .2) !important;
-    border-color: var(--accent-color) !important;
+    border-color: var(--accent) !important;
 }
 
 .card-img {
-    height: 180px;
+    height: 170px;
     object-fit: cover;
-    opacity: 0.8;
-    transition: opacity 0.3s ease;
+    opacity: .82;
+    transition: opacity .3s ease;
 }
 
 .card:hover .card-img {
@@ -349,13 +429,13 @@ textarea {
 }
 
 .card-title {
-    color: var(--accent-color) !important;
+    color: var(--accent) !important;
     font-weight: 600 !important;
     text-transform: none !important;
     letter-spacing: 0 !important;
 }
 
-/* ---------- Skills Badges ---------- */
+/* ===================== SKILLS ===================== */
 .skill-list {
     list-style: none;
     padding-left: 0;
@@ -363,24 +443,24 @@ textarea {
 
 .skill-list li {
     background: rgba(255, 255, 255, .05);
-    padding: 0.4rem 0.9rem;
+    padding: .38rem .85rem;
     border-radius: 50px;
     display: inline-block;
-    margin: 0.25rem;
-    font-size: 0.85rem;
-    border: 1px solid var(--glass-border);
-    transition: background 0.2s ease, transform 0.2s ease;
+    margin: .22rem;
+    font-size: .84rem;
+    border: 1px solid var(--glass-bdr);
+    transition: background .2s ease, transform .2s ease;
 }
 
 .skill-list li:hover {
-    background: var(--accent-gradient);
+    background: var(--accent-g);
     transform: scale(1.08);
     box-shadow: 0 4px 12px rgba(0, 210, 255, .25);
 }
 
-/* ---------- Experience Timeline ---------- */
+/* ===================== TIMELINE ===================== */
 .exp-item {
-    border-left: 2px solid var(--accent-color);
+    border-left: 2px solid var(--accent);
     padding-left: 1.4rem;
     margin-bottom: 2rem;
     position: relative;
@@ -393,13 +473,13 @@ textarea {
     top: 0;
     width: 12px;
     height: 12px;
-    background: var(--accent-color);
+    background: var(--accent);
     border-radius: 50%;
-    box-shadow: 0 0 8px var(--accent-color);
+    box-shadow: 0 0 8px var(--accent);
 }
 
 .exp-date {
-    font-size: 0.78rem;
+    font-size: .78rem;
     color: #94a3b8;
     font-weight: 600;
     text-transform: uppercase;
@@ -407,35 +487,35 @@ textarea {
 
 .exp-company {
     color: #fff;
-    font-size: 1.15rem;
+    font-size: 1.12rem;
     font-weight: 700;
-    margin: 0.4rem 0;
+    margin: .4rem 0;
 }
 
 .exp-role {
-    color: var(--accent-color);
+    color: var(--accent);
     font-weight: 600;
-    margin-bottom: 0.8rem;
+    margin-bottom: .8rem;
 }
 
 .exp-desc li {
-    margin-bottom: 0.45rem;
-    font-size: 0.92rem;
+    margin-bottom: .4rem;
+    font-size: .9rem;
     color: #cbd5e1;
 }
 
-/* ---------- Text Contrast ---------- */
+/* ===================== TEXT CONTRAST ===================== */
 #main article p,
 #main article ul,
 #main article li,
-#main article div:not(.status-bar):not(.status-icons),
-#main article span:not(.icon) {
+#main article div:not(.status-bar):not(.status-icons):not(.card-img-overlay),
+#main article span:not(.icon):not(.exp-date):not(.exp-company):not(.exp-role) {
     color: #e2e8f0 !important;
 }
 
 #main article strong,
 #main article b {
-    color: var(--accent-color) !important;
+    color: var(--accent) !important;
 }
 
 #main article h3,
@@ -444,19 +524,19 @@ textarea {
     color: #fff !important;
 }
 
-/* ---------- Contact Icons ---------- */
+/* ===================== CONTACT ICONS ===================== */
 .icons li a {
-    border: 1px solid var(--glass-border) !important;
+    border: 1px solid var(--glass-bdr) !important;
     padding: 0 !important;
-    transition: transform 0.25s ease, background 0.25s ease;
+    transition: transform .22s ease, background .22s ease;
     display: flex !important;
     align-items: center;
     justify-content: center;
     width: 2.25rem;
     height: 2.25rem;
-    line-height: normal !important;
     box-shadow: none !important;
     background: rgba(255, 255, 255, .04);
+    border-radius: 100%;
 }
 
 .icons li a:before {
@@ -465,42 +545,35 @@ textarea {
 }
 
 .icons li a:hover {
-    background: var(--accent-gradient);
+    background: var(--accent-g);
     border-color: transparent !important;
     transform: translateY(-4px);
     color: #fff !important;
 }
 
-/* ===========================================
-   RESPONSIVE BREAKPOINTS
-   =========================================== */
-
-/* Tablet / smaller laptop (≤ 900px) */
+/* ===================== RESPONSIVE ===================== */
 @media screen and (max-width: 900px) {
     :root {
         --phone-w: 96vw;
-        --phone-border: 6px;
-        --phone-radius: 32px;
+        --phone-br: 5px;
+        --phone-r: 32px;
     }
 
     #main article {
         height: 90vh !important;
         max-height: none !important;
-        padding: 1.8rem 1rem 3rem !important;
     }
 }
 
-/* Mobile landscape / mid-phone (≤ 736px) */
 @media screen and (max-width: 736px) {
     :root {
         --phone-w: 98vw;
-        --phone-border: 5px;
-        --phone-radius: 26px;
+        --phone-br: 4px;
+        --phone-r: 26px;
     }
 
     #main article {
         height: 88vh !important;
-        padding: 1.5rem 0.8rem 2.8rem !important;
     }
 
     .card-img {
@@ -513,26 +586,36 @@ textarea {
 
     #header .content .inner h1 {
         font-size: 1.6rem;
-        letter-spacing: 0.15rem;
+        letter-spacing: .15rem;
     }
 
     .status-bar {
-        padding: 0 20px;
+        padding: 0 18px;
     }
 }
 
-/* Small phones (≤ 480px) */
+@media screen and (max-width: 600px) {
+    #header nav ul {
+        flex-wrap: wrap !important;
+        justify-content: center;
+    }
+
+    #header nav ul li a {
+        min-width: 5.5rem !important;
+        font-size: .7rem !important;
+    }
+}
+
 @media screen and (max-width: 480px) {
     :root {
         --phone-w: 100vw;
-        --phone-border: 0px;
-        --phone-radius: 18px;
+        --phone-br: 0px;
+        --phone-r: 18px;
     }
 
     #main article {
         height: 100vh !important;
         max-height: 100vh !important;
-        padding: 1.2rem 0.7rem 2.5rem !important;
         box-shadow: none !important;
     }
 
@@ -540,7 +623,6 @@ textarea {
         display: none;
     }
 
-    /* hide punch-hole on tiny screens */
     .home-bar {
         width: 70px;
     }
@@ -550,20 +632,7 @@ textarea {
     }
 
     .skill-list li {
-        font-size: 0.78rem;
-        padding: 0.3rem 0.7rem;
-    }
-}
-
-/* Nav wrapping fix for small screens */
-@media screen and (max-width: 600px) {
-    #header nav ul {
-        flex-wrap: wrap !important;
-        justify-content: center;
-    }
-
-    #header nav ul li a {
-        min-width: 5.5rem !important;
-        font-size: 0.7rem !important;
+        font-size: .76rem;
+        padding: .28rem .65rem;
     }
 }
