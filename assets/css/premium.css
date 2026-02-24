@@ -29,67 +29,12 @@ textarea {
 }
 
 /* ===================== ANIMATED BACKGROUND ===================== */
-/* Replaces bg image - pure CSS, zero network cost */
-#bg::after {
-    background-image: none !important;
-    background: radial-gradient(ellipse at 20% 50%, #0d2137 0%, #050d1a 60%) !important;
-}
-
-#bg::before {
-    background-image:
-        radial-gradient(circle at 15% 25%, rgba(0, 210, 255, .18) 0%, transparent 45%),
-        radial-gradient(circle at 80% 70%, rgba(58, 123, 213, .20) 0%, transparent 45%),
-        radial-gradient(circle at 50% 50%, rgba(0, 50, 100, .30) 0%, transparent 70%) !important;
-    background-color: #050d1a !important;
-    animation: bgPulse 12s ease-in-out infinite alternate !important;
-    background-size: cover !important;
-}
-
-@keyframes bgPulse {
-    0% {
-        filter: brightness(0.85) hue-rotate(0deg);
-    }
-
-    50% {
-        filter: brightness(1.05) hue-rotate(8deg);
-    }
-
-    100% {
-        filter: brightness(0.90) hue-rotate(-5deg);
-    }
-}
-
-/* Floating particle dots overlay */
-#wrapper::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background-image:
-        radial-gradient(circle, rgba(0, 210, 255, .55) 1px, transparent 1px),
-        radial-gradient(circle, rgba(58, 123, 213, .40) 1px, transparent 1px),
-        radial-gradient(circle, rgba(255, 255, 255, .20) 1px, transparent 1px);
-    background-size: 180px 180px, 120px 120px, 90px 90px;
-    background-position: 0 0, 60px 60px, 30px 90px;
-    animation: particleDrift 30s linear infinite;
-    opacity: .6;
-}
-
-@keyframes particleDrift {
-    0% {
-        background-position: 0 0, 60px 60px, 30px 90px;
-    }
-
-    100% {
-        background-position: 180px 180px, 240px 240px, 120px 270px;
-    }
-}
+/* Background is now rendered by assets/js/portfolio-sky.js (canvas).
+   #bg div is hidden by JS. No CSS background rules needed here.     */
 
 /* ===================== WRAPPER ===================== */
 #wrapper {
     background-image: none !important;
-    /* handled by #bg::before above */
     position: relative;
     z-index: 3;
 }
