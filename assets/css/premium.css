@@ -636,3 +636,170 @@ textarea {
         padding: .28rem .65rem;
     }
 }
+
+/* ===================== PROJECT CARDS (new accordion style) ===================== */
+.proj-card {
+    margin-bottom: 1.4rem;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--glass-bdr);
+    background: rgba(15, 23, 42, .6);
+}
+
+.proj-img {
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+    display: block;
+    filter: brightness(.92);
+    transition: filter .3s ease;
+}
+
+.proj-card:hover .proj-img {
+    filter: brightness(1);
+}
+
+/* --- glowing tip-bar / accordion trigger --- */
+.proj-tip {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .7rem 1rem;
+    background: rgba(0, 210, 255, .10);
+    border: none;
+    border-top: 1px solid rgba(0, 210, 255, .25);
+    cursor: pointer;
+    gap: .5rem;
+    transition: background .25s ease, box-shadow .25s ease;
+    box-shadow: 0 0 0 transparent;
+    /* glow pulse on idle */
+    animation: tipPulse 3s ease-in-out infinite;
+}
+
+@keyframes tipPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 6px rgba(0, 210, 255, .15);
+    }
+
+    50% {
+        box-shadow: 0 0 14px rgba(0, 210, 255, .45);
+    }
+}
+
+.proj-tip:hover,
+.proj-tip[aria-expanded="true"] {
+    background: rgba(0, 210, 255, .22);
+    box-shadow: 0 0 18px rgba(0, 210, 255, .55);
+    animation: none;
+}
+
+.proj-name {
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-align: left;
+    flex: 1;
+}
+
+.proj-arrow {
+    color: var(--accent);
+    font-size: .75rem;
+    transition: transform .3s ease;
+    flex-shrink: 0;
+}
+
+.proj-tip[aria-expanded="true"] .proj-arrow {
+    transform: rotate(180deg);
+}
+
+/* --- expandable description panel --- */
+.proj-desc {
+    padding: .9rem 1rem;
+    border-top: 1px solid rgba(0, 210, 255, .15);
+    background: rgba(0, 210, 255, .05);
+    animation: descSlide .25s ease;
+}
+
+.proj-desc[hidden] {
+    display: none;
+}
+
+@keyframes descSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.proj-desc p {
+    font-size: .86rem;
+    color: #cbd5e1 !important;
+    margin-bottom: .7rem;
+}
+
+.proj-desc p strong {
+    color: var(--accent) !important;
+}
+
+.proj-desc .button.small {
+    font-size: .75rem;
+    padding: .3rem .9rem;
+    border-radius: 50px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: transparent;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.proj-desc .button.small:hover {
+    background: var(--accent);
+    color: #000;
+}
+
+/* Achievements card (no image) */
+.achievements-card {
+    padding: 1.2rem;
+    border: 1px solid rgba(0, 210, 255, .2) !important;
+    background: rgba(0, 210, 255, .06) !important;
+}
+
+.achievements-card h5 {
+    color: var(--accent);
+    margin-bottom: .8rem;
+    font-size: 1rem;
+}
+
+.achievements-card ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 1rem;
+}
+
+.achievements-card li {
+    font-size: .88rem;
+    margin-bottom: .35rem;
+    color: #e2e8f0 !important;
+}
+
+.achievements-card .button.primary {
+    display: inline-block;
+    border-radius: 50px;
+    padding: .4rem 1.1rem;
+    background: var(--accent-g);
+    color: #000;
+    font-weight: 600;
+    font-size: .82rem;
+    text-decoration: none;
+    border: none;
+}

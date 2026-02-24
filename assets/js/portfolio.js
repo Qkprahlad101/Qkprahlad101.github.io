@@ -76,4 +76,27 @@
     updateClocks();
     setInterval(updateClocks, 30000);
 
+    /* -------------------------------------------------------
+       4. Project tip-bar accordion
+    ------------------------------------------------------- */
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.proj-tip');
+        if (!btn) return;
+
+        var desc = btn.nextElementSibling;
+        var isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+        // Close any other open desc panels first
+        document.querySelectorAll('.proj-tip[aria-expanded="true"]').forEach(function (other) {
+            if (other !== btn) {
+                other.setAttribute('aria-expanded', 'false');
+                var otherDesc = other.nextElementSibling;
+                if (otherDesc) otherDesc.hidden = true;
+            }
+        });
+
+        btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+        if (desc) desc.hidden = isOpen;
+    });
+
 })();
