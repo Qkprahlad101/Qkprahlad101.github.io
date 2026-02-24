@@ -1,14 +1,24 @@
+/* =============================================
+   PREMIUM PORTFOLIO CSS - Prahlad Kumar
+   v2.0 — Responsive + Performance Optimised
+   ============================================= */
+
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
+/* ---------- CSS Variables ---------- */
 :root {
     --accent-color: #00d2ff;
     --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
     --bg-dark: #0f172a;
-    --card-bg: rgba(30, 41, 59, 0.7);
-    --glass-bg: rgba(255, 255, 255, 0.08);
+    --card-bg: rgba(30, 41, 59, 0.75);
+    --glass-bg: rgba(15, 23, 42, 0.95);
     --glass-border: rgba(255, 255, 255, 0.15);
+    --phone-w: 30rem;
+    --phone-border: 8px;
+    --phone-radius: 40px;
 }
 
+/* ---------- Base ---------- */
 body,
 input,
 select,
@@ -18,19 +28,22 @@ textarea {
 }
 
 #wrapper {
-    background-image: radial-gradient(circle at top right, rgba(0, 210, 255, 0.1), transparent),
-        radial-gradient(circle at bottom left, rgba(58, 123, 213, 0.1), transparent) !important;
+    background-image:
+        radial-gradient(circle at top right, rgba(0, 210, 255, .10), transparent),
+        radial-gradient(circle at bottom left, rgba(58, 123, 213, .10), transparent) !important;
 }
 
+/* ---------- Header Logo ---------- */
 #header .logo {
     background: var(--accent-gradient);
-    box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+    box-shadow: 0 0 20px rgba(0, 210, 255, .5);
     border: none !important;
     position: relative;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    will-change: transform;
 }
 
 .logo-slideshow {
@@ -50,8 +63,9 @@ textarea {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    animation: iconSlideshow 10s infinite;
+    animation: iconSlideshow 12s infinite;
     line-height: 5.5rem !important;
+    will-change: opacity, transform;
 }
 
 .logo-slideshow .icon:nth-child(1) {
@@ -59,36 +73,32 @@ textarea {
 }
 
 .logo-slideshow .icon:nth-child(2) {
-    animation-delay: 2s;
+    animation-delay: 3s;
 }
 
 .logo-slideshow .icon:nth-child(3) {
-    animation-delay: 4s;
-}
-
-.logo-slideshow .icon:nth-child(4) {
     animation-delay: 6s;
 }
 
-.logo-slideshow .icon:nth-child(5) {
-    animation-delay: 8s;
+.logo-slideshow .icon:nth-child(4) {
+    animation-delay: 9s;
 }
 
 @keyframes iconSlideshow {
 
     0%,
-    20% {
+    25% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.8);
     }
 
     5%,
-    15% {
+    20% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
 
-    20% {
+    24% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(1.2);
     }
@@ -99,6 +109,7 @@ textarea {
     color: #ffffff;
 }
 
+/* ---------- H1 Gradient ---------- */
 #header .content .inner h1 {
     font-weight: 700;
     background: var(--accent-gradient);
@@ -108,90 +119,83 @@ textarea {
     letter-spacing: 0.3rem;
 }
 
+/* =====================================================================
+   PHONE FRAME — the main article "modal" styled as an Android device
+   ===================================================================== */
 #main article {
-    background: #000000 !important;
-    /* Start black for the screen */
-    backdrop-filter: blur(30px) !important;
-    border: 8px solid #1a1a1a !important;
-    /* Thick metallic frame */
-    border-radius: 40px !important;
-    /* S25 Ultra style slightly rounded corners */
-    padding: 1.5rem 1.5rem 4rem 1.5rem !important;
-    box-shadow: 0 0 0 2px #333, 0 30px 60px rgba(0, 0, 0, 0.8) !important;
-    width: 32rem !important;
-    /* Phone-like width */
-    height: 85vh !important;
-    /* Phone-like height */
-    max-height: 800px;
-    overflow-y: auto !important;
+    /* Layout */
     position: relative;
-    transition: background-color 0.5s ease 1.8s !important;
+    width: var(--phone-w) !important;
+    max-width: calc(100vw - 2rem) !important;
+    /* never wider than viewport */
+    height: 85vh !important;
+    max-height: 820px !important;
+    min-height: 400px;
+    overflow: hidden !important;
+    /* clip scrollbar inside radius */
+
+    /* Appearance */
+    background: #000 !important;
+    border: var(--phone-border) solid #252525 !important;
+    border-radius: var(--phone-radius) !important;
+    box-shadow: 0 0 0 2px #3a3a3a, 0 30px 70px rgba(0, 0, 0, .85) !important;
+    padding: 2rem 1.2rem 3.5rem !important;
+
+    /* Performance */
+    contain: layout style;
+    will-change: opacity, transform;
+    transition: background-color 0.5s ease 1.8s, opacity 0.325s ease-in-out, transform 0.325s ease-in-out !important;
 }
 
+/* Scrollable inner area — keeps scrollbar inside border-radius */
+#main article .article-inner {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) transparent;
+}
+
+#main article .article-inner::-webkit-scrollbar {
+    width: 3px;
+}
+
+#main article .article-inner::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#main article .article-inner::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
+}
+
+/* Active state: screen lights up navy-blue */
 #main article.active {
-    background: rgba(15, 23, 42, 0.95) !important;
-    /* Deep Navy app background */
+    background: var(--glass-bg) !important;
 }
 
-/* Punch-hole camera */
+/* ---------- Punch-hole camera notch ---------- */
 #main article::before {
     content: '';
     position: absolute;
-    top: 15px;
+    top: 12px;
     left: 50%;
     transform: translateX(-50%);
-    width: 12px;
-    height: 12px;
-    background: #0a0a0a;
+    width: 11px;
+    height: 11px;
+    background: #080808;
     border-radius: 50%;
-    z-index: 100;
-    box-shadow: inset 0 0 3px rgba(255, 255, 255, 0.2);
+    z-index: 110;
+    box-shadow: inset 0 0 3px rgba(255, 255, 255, .2);
+    pointer-events: none;
 }
 
-/* Status Bar */
-.status-bar {
-    position: absolute;
-    top: 5px;
-    left: 0;
-    width: 100%;
-    height: 25px;
-    padding: 0 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.7rem;
-    color: #fff;
-    z-index: 105;
-    font-weight: 600;
-}
-
-.status-icons {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-/* Home Indicator for Android */
-.home-bar {
-    position: absolute;
-    bottom: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 10px;
-    z-index: 100;
-}
-
-/* Boot Animation Cover */
+/* ---------- Boot Animation Overlay ---------- */
 #main article::after {
     content: 'Prahlad Kumar';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: #000;
     color: var(--accent-color);
     display: flex;
@@ -199,40 +203,40 @@ textarea {
     justify-content: center;
     font-size: 1.8rem;
     font-weight: 700;
+    font-family: 'Outfit', sans-serif;
     z-index: 99;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.5s ease;
+    pointer-events: none;
+    border-radius: calc(var(--phone-radius) - var(--phone-border));
 }
 
 #main article.active::after {
-    animation: phoneBoot 2s forwards;
     visibility: visible;
+    animation: phoneBoot 2s forwards;
 }
 
 @keyframes phoneBoot {
     0% {
         opacity: 1;
-        content: 'Turning on...';
-        font-size: 1rem;
-        color: #fff;
+        font-size: 0.9rem;
+        color: #aaa;
     }
 
-    40% {
+    35% {
         opacity: 1;
-        content: 'Turning on...';
+        font-size: 0.9rem;
+        color: #aaa;
     }
 
     50% {
         opacity: 1;
-        content: 'Prahlad Kumar';
         font-size: 1.8rem;
         color: var(--accent-color);
     }
 
-    90% {
+    88% {
         opacity: 1;
-        content: 'Prahlad Kumar';
     }
 
     100% {
@@ -241,7 +245,7 @@ textarea {
     }
 }
 
-/* Content visibility after boot */
+/* Content fades in after boot */
 #main article>* {
     opacity: 0;
     transition: opacity 0.5s ease 1.8s;
@@ -251,48 +255,90 @@ textarea {
     opacity: 1;
 }
 
+/* ---------- Status Bar ---------- */
+.status-bar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 26px;
+    padding: 0 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.68rem;
+    color: #fff;
+    z-index: 105;
+    font-weight: 600;
+    background: transparent;
+    flex-shrink: 0;
+}
+
+.status-icons {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    font-size: 0.7rem;
+}
+
+/* ---------- Home Indicator ---------- */
+.home-bar {
+    width: 90px;
+    height: 4px;
+    background: rgba(255, 255, 255, .35);
+    border-radius: 10px;
+    margin: 1.2rem auto 0;
+    display: block;
+}
+
+/* ---------- Close button (keep inside phone) ---------- */
+#main article .close {
+    top: 0.9rem !important;
+    right: 0.9rem !important;
+    z-index: 110;
+}
+
+/* ---------- Article headings ---------- */
 #main article h2.major {
     border-bottom: 2px solid var(--accent-color) !important;
     font-weight: 700;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     text-align: center;
+    color: #fff !important;
 }
 
-/* Navigation inside "App" */
-#main article .close {
-    top: 1rem !important;
-    right: 1rem !important;
-    z-index: 101;
+/* NO border-top on sections — kills the horizontal white line */
+#main article h2.major,
+#main article *,
+#main article::before,
+#main article::after {
+    border-top: none;
 }
 
-/* Custom Scrollbar for Phone */
-#main article::-webkit-scrollbar {
-    width: 4px;
+/* Re-apply only the underline we want */
+#main article h2.major {
+    border-bottom: 2px solid var(--accent-color) !important;
 }
 
-#main article::-webkit-scrollbar-thumb {
-    background: var(--accent-color);
-    border-radius: 10px;
-}
-
-/* Card Improvements */
+/* ---------- Cards ---------- */
 .card {
     background: var(--card-bg) !important;
     border: 1px solid var(--glass-border) !important;
     border-radius: 16px !important;
     overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease !important;
-    margin-bottom: 2rem;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+    margin-bottom: 1.5rem;
+    will-change: transform;
 }
 
 .card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 15px 30px rgba(0, 210, 255, 0.2) !important;
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(0, 210, 255, .2) !important;
     border-color: var(--accent-color) !important;
 }
 
 .card-img {
-    height: 200px;
+    height: 180px;
     object-fit: cover;
     opacity: 0.8;
     transition: opacity 0.3s ease;
@@ -309,33 +355,38 @@ textarea {
     letter-spacing: 0 !important;
 }
 
-/* Skills Badge */
+/* ---------- Skills Badges ---------- */
+.skill-list {
+    list-style: none;
+    padding-left: 0;
+}
+
 .skill-list li {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, .05);
+    padding: 0.4rem 0.9rem;
     border-radius: 50px;
     display: inline-block;
-    margin: 0.3rem;
-    font-size: 0.9rem;
+    margin: 0.25rem;
+    font-size: 0.85rem;
     border: 1px solid var(--glass-border);
-    transition: all 0.3s ease;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .skill-list li:hover {
     background: var(--accent-gradient);
-    transform: scale(1.1);
-    box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(0, 210, 255, .25);
 }
 
-/* Experience Timeline Style */
+/* ---------- Experience Timeline ---------- */
 .exp-item {
     border-left: 2px solid var(--accent-color);
-    padding-left: 1.5rem;
-    margin-bottom: 2.5rem;
+    padding-left: 1.4rem;
+    margin-bottom: 2rem;
     position: relative;
 }
 
-.exp-item:before {
+.exp-item::before {
     content: '';
     position: absolute;
     left: -7px;
@@ -344,65 +395,42 @@ textarea {
     height: 12px;
     background: var(--accent-color);
     border-radius: 50%;
-    box-shadow: 0 0 10px var(--accent-color);
+    box-shadow: 0 0 8px var(--accent-color);
 }
 
 .exp-date {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #94a3b8;
     font-weight: 600;
     text-transform: uppercase;
 }
 
 .exp-company {
-    color: #ffffff;
-    font-size: 1.2rem;
+    color: #fff;
+    font-size: 1.15rem;
     font-weight: 700;
-    margin: 0.5rem 0;
+    margin: 0.4rem 0;
 }
 
 .exp-role {
     color: var(--accent-color);
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 0.8rem;
 }
 
 .exp-desc li {
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
+    margin-bottom: 0.45rem;
+    font-size: 0.92rem;
     color: #cbd5e1;
 }
 
-/* Navigation Hover Effects */
-nav ul li a:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 0;
-    height: 2px;
-    background: var(--accent-gradient);
-    transition: all 0.3s ease;
-    transform: translateX(-50%);
-}
-
-nav ul li a:hover:after {
-    width: 80%;
-}
-
-/* Close button improvement */
-article .close:before {
-    color: var(--accent-color);
-}
-
-/* Contrast and Text Visibility */
+/* ---------- Text Contrast ---------- */
 #main article p,
 #main article ul,
 #main article li,
-#main article div,
+#main article div:not(.status-bar):not(.status-icons),
 #main article span:not(.icon) {
     color: #e2e8f0 !important;
-    /* Off-white for better readability */
 }
 
 #main article strong,
@@ -410,19 +438,17 @@ article .close:before {
     color: var(--accent-color) !important;
 }
 
-#main article h2.major,
 #main article h3,
 #main article h4,
 #main article h5 {
-    color: #ffffff !important;
+    color: #fff !important;
 }
 
-/* Footer Icons Fix */
+/* ---------- Contact Icons ---------- */
 .icons li a {
     border: 1px solid var(--glass-border) !important;
     padding: 0 !important;
-    /* Remove padding as it breaks the alignment */
-    transition: all 0.3s ease;
+    transition: transform 0.25s ease, background 0.25s ease;
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -430,17 +456,114 @@ article .close:before {
     height: 2.25rem;
     line-height: normal !important;
     box-shadow: none !important;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, .04);
 }
 
 .icons li a:before {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     margin: 0;
 }
 
 .icons li a:hover {
     background: var(--accent-gradient);
     border-color: transparent !important;
-    transform: translateY(-5px);
-    color: #ffffff !important;
+    transform: translateY(-4px);
+    color: #fff !important;
+}
+
+/* ===========================================
+   RESPONSIVE BREAKPOINTS
+   =========================================== */
+
+/* Tablet / smaller laptop (≤ 900px) */
+@media screen and (max-width: 900px) {
+    :root {
+        --phone-w: 96vw;
+        --phone-border: 6px;
+        --phone-radius: 32px;
+    }
+
+    #main article {
+        height: 90vh !important;
+        max-height: none !important;
+        padding: 1.8rem 1rem 3rem !important;
+    }
+}
+
+/* Mobile landscape / mid-phone (≤ 736px) */
+@media screen and (max-width: 736px) {
+    :root {
+        --phone-w: 98vw;
+        --phone-border: 5px;
+        --phone-radius: 26px;
+    }
+
+    #main article {
+        height: 88vh !important;
+        padding: 1.5rem 0.8rem 2.8rem !important;
+    }
+
+    .card-img {
+        height: 140px;
+    }
+
+    .exp-item {
+        padding-left: 1rem;
+    }
+
+    #header .content .inner h1 {
+        font-size: 1.6rem;
+        letter-spacing: 0.15rem;
+    }
+
+    .status-bar {
+        padding: 0 20px;
+    }
+}
+
+/* Small phones (≤ 480px) */
+@media screen and (max-width: 480px) {
+    :root {
+        --phone-w: 100vw;
+        --phone-border: 0px;
+        --phone-radius: 18px;
+    }
+
+    #main article {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        padding: 1.2rem 0.7rem 2.5rem !important;
+        box-shadow: none !important;
+    }
+
+    #main article::before {
+        display: none;
+    }
+
+    /* hide punch-hole on tiny screens */
+    .home-bar {
+        width: 70px;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .skill-list li {
+        font-size: 0.78rem;
+        padding: 0.3rem 0.7rem;
+    }
+}
+
+/* Nav wrapping fix for small screens */
+@media screen and (max-width: 600px) {
+    #header nav ul {
+        flex-wrap: wrap !important;
+        justify-content: center;
+    }
+
+    #header nav ul li a {
+        min-width: 5.5rem !important;
+        font-size: 0.7rem !important;
+    }
 }
