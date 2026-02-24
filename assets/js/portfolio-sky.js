@@ -1,257 +1,258 @@
 /**
- * portfolio-sky.js — Dynamic day/night sky cycle
- * Sun rises bottom-left, arcs to top-center (noon), sets bottom-right.
- * Sky gradient and name color change continuously with sun position.
+ * portfolio-sky.js — Dynamic day/night sky cycle v4.0
+ * 5-stop banding-free gradient + 3 atmospheric feather layers.
+ * Sun arc, stars, name colour and CSS accent var all sync to sun progress.
  */
 (function () {
     'use strict';
 
-    /* ── canvas setup ─────────────────────────────────────────────── */
+    /* ── canvas setup ─────────────────────────────────────────── */
     var canvas = document.createElement('canvas');
     canvas.id = 'sky-canvas';
     canvas.style.cssText =
         'position:fixed;top:0;left:0;width:100%;height:100%;' +
         'z-index:1;pointer-events:none;';
     document.body.insertBefore(canvas, document.getElementById('wrapper'));
-
     var ctx = canvas.getContext('2d');
     var h1 = document.querySelector('#header .content .inner h1');
     var bgDiv = document.getElementById('bg');
-    if (bgDiv) bgDiv.style.display = 'none'; // hide old bg div
+    if (bgDiv) bgDiv.style.display = 'none';
 
-    /* ── resize ───────────────────────────────────────────────────── */
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize);
     resize();
 
-    /* ── helpers ──────────────────────────────────────────────────── */
+    /* ── helpers ──────────────────────────────────────────────── */
     function lerp(a, b, t) { return a + (b - a) * t; }
-
-    // Each color is [r, g, b]
     function lerpRGB(c1, c2, t) {
-        return [
-            Math.round(lerp(c1[0], c2[0], t)),
-            Math.round(lerp(c1[1], c2[1], t)),
-            Math.round(lerp(c1[2], c2[2], t))
-        ];
-    }
-    function rgba(c, a) {
-        return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
+        return [Math.round(lerp(c1[0], c2[0], t)), Math.round(lerp(c1[1], c2[1], t)), Math.round(lerp(c1[2], c2[2], t))];
     }
     function rgb(c) { return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
-    function toHex(c) {
-        return '#' + c.map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join('');
-    }
+    function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+    function toHex(c) { return '#' + c.map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join(''); }
 
-    /** Find neighboring keyframes by progress and return interpolated value */
-    function sample(frames, progress) {
+    function sample(frames, p) {
         for (var i = 0; i < frames.length - 1; i++) {
             var a = frames[i], b = frames[i + 1];
-            if (progress >= a.p && progress <= b.p) {
+            if (p >= a.p && p <= b.p) {
                 var span = b.p - a.p;
-                var t = span < 0.0001 ? 0 : (progress - a.p) / span;
+                var t = span < 0.0001 ? 0 : (p - a.p) / span;
                 return { a: a, b: b, t: t };
             }
         }
         return { a: frames[frames.length - 1], b: frames[frames.length - 1], t: 0 };
     }
 
-    /* ── sky keyframes ────────────────────────────────────────────── */
-    // Each keyframe has: top (zenith colour), mid (horizon blend colour),
-    // bot (low horizon colour), sunC, glowC, stars, fog (horizon fog rgba)
+    /* ── sky keyframes ────────────────────────────────────────── */
+    // top=zenith  upr=25%  mid=horizon  lwr=75%  bot=ground
+    // atmo=[r,g,b,alpha] — colour of the 3 overlapping soft layers
     var SKY = [
-        { p: 0.00, top: [2, 4, 18], mid: [5, 8, 22], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0, fog: [10, 15, 40, 0.18] }, // deep night
-        { p: 0.07, top: [5, 6, 22], mid: [18, 8, 12], bot: [30, 10, 5], sunC: [255, 80, 0], glowC: [220, 30, 0], stars: 0.85, fog: [40, 20, 15, 0.20] }, // pre-dawn
-        { p: 0.14, top: [20, 5, 35], mid: [100, 28, 5], bot: [180, 50, 0], sunC: [255, 120, 0], glowC: [255, 60, 0], stars: 0.4, fog: [200, 90, 30, 0.22] }, // dawn
-        { p: 0.22, top: [80, 20, 100], mid: [180, 70, 20], bot: [255, 110, 0], sunC: [255, 185, 0], glowC: [255, 100, 0], stars: 0.0, fog: [255, 140, 60, 0.20] }, // sunrise
-        { p: 0.30, top: [25, 80, 190], mid: [160, 120, 60], bot: [255, 140, 0], sunC: [255, 220, 80], glowC: [255, 165, 0], stars: 0.0, fog: [255, 200, 120, 0.16] }, // early morning
-        { p: 0.40, top: [18, 90, 200], mid: [60, 140, 220], bot: [100, 165, 255], sunC: [255, 248, 200], glowC: [255, 200, 80], stars: 0.0, fog: [180, 220, 255, 0.12] }, // mid-morning
-        { p: 0.50, top: [10, 80, 200], mid: [50, 130, 220], bot: [80, 160, 255], sunC: [255, 255, 240], glowC: [255, 240, 150], stars: 0.0, fog: [200, 230, 255, 0.10] }, // noon
-        { p: 0.60, top: [15, 80, 195], mid: [60, 140, 225], bot: [90, 170, 255], sunC: [255, 235, 140], glowC: [255, 210, 80], stars: 0.0, fog: [200, 220, 255, 0.10] }, // afternoon
-        { p: 0.70, top: [20, 60, 160], mid: [160, 85, 20], bot: [220, 100, 10], sunC: [255, 180, 50], glowC: [255, 140, 0], stars: 0.0, fog: [255, 180, 80, 0.18] }, // golden hour
-        { p: 0.80, top: [60, 10, 90], mid: [140, 35, 10], bot: [200, 60, 10], sunC: [255, 100, 30], glowC: [255, 60, 0], stars: 0.1, fog: [255, 100, 40, 0.22] }, // sunset
-        { p: 0.88, top: [20, 5, 35], mid: [60, 15, 10], bot: [100, 20, 10], sunC: [200, 40, 10], glowC: [180, 20, 0], stars: 0.5, fog: [160, 60, 30, 0.20] }, // dusk
-        { p: 0.94, top: [4, 4, 18], mid: [10, 8, 18], bot: [15, 8, 20], sunC: [100, 20, 0], glowC: [80, 10, 0], stars: 0.85, fog: [20, 15, 35, 0.18] }, // twilight
-        { p: 1.00, top: [2, 4, 18], mid: [5, 8, 22], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0, fog: [10, 15, 40, 0.18] }, // night again
+        { p: 0.00, top: [2, 4, 18], upr: [4, 6, 20], mid: [6, 8, 22], lwr: [7, 9, 23], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0, atmo: [20, 25, 55, 0.14] }, // night
+        { p: 0.07, top: [5, 6, 22], upr: [10, 7, 18], mid: [20, 10, 10], lwr: [25, 10, 8], bot: [30, 10, 5], sunC: [255, 80, 0], glowC: [220, 30, 0], stars: 0.85, atmo: [50, 30, 18, 0.16] }, // pre-dawn
+        { p: 0.14, top: [18, 5, 32], upr: [50, 15, 18], mid: [100, 30, 5], lwr: [145, 40, 3], bot: [180, 50, 0], sunC: [255, 120, 0], glowC: [255, 60, 0], stars: 0.4, atmo: [200, 95, 35, 0.18] }, // dawn
+        { p: 0.22, top: [75, 18, 95], upr: [130, 45, 15], mid: [180, 72, 18], lwr: [220, 92, 10], bot: [255, 110, 0], sunC: [255, 185, 0], glowC: [255, 100, 0], stars: 0.0, atmo: [240, 145, 65, 0.16] }, // sunrise
+        { p: 0.30, top: [22, 78, 188], upr: [80, 100, 120], mid: [155, 118, 58], lwr: [200, 130, 30], bot: [255, 140, 0], sunC: [255, 220, 80], glowC: [255, 165, 0], stars: 0.0, atmo: [245, 195, 120, 0.13] }, // early morning
+        { p: 0.40, top: [16, 88, 200], upr: [35, 115, 215], mid: [62, 140, 225], lwr: [80, 155, 245], bot: [100, 165, 255], sunC: [255, 248, 200], glowC: [255, 200, 80], stars: 0.0, atmo: [190, 225, 255, 0.10] }, // mid-morning
+        { p: 0.50, top: [10, 78, 200], upr: [30, 108, 215], mid: [50, 132, 222], lwr: [65, 148, 240], bot: [80, 160, 255], sunC: [255, 255, 240], glowC: [255, 240, 150], stars: 0.0, atmo: [210, 235, 255, 0.08] }, // noon
+        { p: 0.60, top: [14, 78, 194], upr: [35, 110, 215], mid: [62, 140, 225], lwr: [75, 155, 240], bot: [90, 170, 255], sunC: [255, 235, 140], glowC: [255, 210, 80], stars: 0.0, atmo: [210, 225, 255, 0.09] }, // afternoon
+        { p: 0.70, top: [18, 58, 158], upr: [80, 72, 60], mid: [155, 88, 20], lwr: [190, 95, 14], bot: [220, 100, 10], sunC: [255, 180, 50], glowC: [255, 140, 0], stars: 0.0, atmo: [255, 185, 85, 0.15] }, // golden hour
+        { p: 0.80, top: [55, 10, 88], upr: [100, 22, 12], mid: [145, 38, 10], lwr: [175, 50, 10], bot: [200, 60, 10], sunC: [255, 100, 30], glowC: [255, 60, 0], stars: 0.1, atmo: [255, 105, 42, 0.18] }, // sunset
+        { p: 0.88, top: [18, 5, 33], upr: [38, 10, 10], mid: [62, 16, 10], lwr: [82, 18, 10], bot: [100, 20, 10], sunC: [200, 40, 10], glowC: [180, 20, 0], stars: 0.5, atmo: [165, 62, 32, 0.16] }, // dusk
+        { p: 0.94, top: [4, 4, 18], upr: [7, 6, 18], mid: [10, 8, 18], lwr: [12, 8, 19], bot: [15, 8, 20], sunC: [100, 20, 0], glowC: [80, 10, 0], stars: 0.85, atmo: [22, 16, 36, 0.14] }, // twilight
+        { p: 1.00, top: [2, 4, 18], upr: [4, 6, 20], mid: [6, 8, 22], lwr: [7, 9, 23], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0, atmo: [20, 25, 55, 0.14] }, // night
     ];
 
-    /* ── name colour keyframes ────────────────────────────────────── */
+    /* ── name colour keyframes ────────────────────────────────── */
     var NAME = [
-        { p: 0.00, c: [40, 60, 120] }, // night muted blue
-        { p: 0.07, c: [180, 60, 0] }, // pre-dawn orange
-        { p: 0.16, c: [255, 110, 0] }, // dawn orange
-        { p: 0.24, c: [255, 200, 0] }, // golden yellow at sunrise
-        { p: 0.35, c: [0, 200, 255] }, // morning — back to cyan accent
-        { p: 0.50, c: [255, 255, 255] }, // noon — blazing white
-        { p: 0.65, c: [255, 220, 80] }, // afternoon golden
-        { p: 0.76, c: [255, 160, 20] }, // golden hour amber
-        { p: 0.84, c: [255, 80, 30] }, // sunset red-orange
-        { p: 0.92, c: [160, 40, 20] }, // dusk red
-        { p: 1.00, c: [40, 60, 120] }, // night
+        { p: 0.00, c: [40, 60, 120] },  // night
+        { p: 0.07, c: [180, 60, 0] },  // pre-dawn
+        { p: 0.16, c: [255, 110, 0] },  // dawn
+        { p: 0.24, c: [255, 200, 0] },  // sunrise gold
+        { p: 0.35, c: [0, 200, 255] },  // morning cyan
+        { p: 0.50, c: [255, 255, 255] },  // noon white
+        { p: 0.65, c: [255, 220, 80] },  // afternoon gold
+        { p: 0.76, c: [255, 160, 20] },  // golden hour
+        { p: 0.84, c: [255, 80, 30] },  // sunset
+        { p: 0.92, c: [160, 40, 20] },  // dusk
+        { p: 1.00, c: [40, 60, 120] },  // night
     ];
 
-    /* ── stars (pre-generated) ────────────────────────────────────── */
-    var NUM_STARS = 220;
+    /* ── accent CSS var keyframes (nav/section text) ──────────── */
+    var ACCENT = [
+        { p: 0.00, c: [60, 100, 200] },  // night: soft blue
+        { p: 0.07, c: [200, 80, 10] },  // pre-dawn: dark orange
+        { p: 0.16, c: [255, 130, 0] },  // dawn: orange
+        { p: 0.25, c: [255, 210, 0] },  // sunrise: gold
+        { p: 0.35, c: [0, 210, 255] },  // morning: cyan
+        { p: 0.50, c: [120, 220, 255] },  // noon: light cyan
+        { p: 0.65, c: [255, 215, 60] },  // afternoon: golden
+        { p: 0.76, c: [255, 165, 20] },  // golden hour: amber
+        { p: 0.84, c: [255, 90, 30] },  // sunset: red-orange
+        { p: 0.92, c: [180, 50, 20] },  // dusk: dim red
+        { p: 1.00, c: [60, 100, 200] },  // night
+    ];
+
+    /* ── stars ────────────────────────────────────────────────── */
     var starData = [];
-    for (var i = 0; i < NUM_STARS; i++) {
-        starData.push({
-            xr: Math.random(),              // fraction of width
-            yr: Math.random() * 0.78,       // top 78% of height
-            radius: Math.random() * 1.4 + 0.3,
-            phase: Math.random() * Math.PI * 2
-        });
+    for (var i = 0; i < 220; i++) {
+        starData.push({ xr: Math.random(), yr: Math.random() * 0.78, r: Math.random() * 1.4 + 0.3, ph: Math.random() * Math.PI * 2 });
     }
 
-    /* ── sun position along arc ───────────────────────────────────── */
-    // Elliptical arc: center at (W/2, H), semi-axis Rx = W*0.52, Ry = H*0.88
-    // angle goes from π (left) → 0 (right) as progress 0→1
-    function sunPos(progress, W, H) {
-        var angle = Math.PI * (1 - progress);
-        var Rx = W * 0.52;
-        var Ry = H * 0.88;
-        return {
-            x: W / 2 + Rx * Math.cos(angle),
-            y: H - Ry * Math.sin(angle)
-        };
+    /* ── sun on elliptical arc ────────────────────────────────── */
+    function sunPos(p, W, H) {
+        var angle = Math.PI * (1 - p);
+        return { x: W / 2 + W * 0.52 * Math.cos(angle), y: H - H * 0.88 * Math.sin(angle) };
     }
 
-    /* ── draw stars ───────────────────────────────────────────────── */
+    /* ── stars draw ───────────────────────────────────────────── */
     function drawStars(W, H, opacity, now) {
         if (opacity < 0.01) return;
         ctx.save();
         for (var i = 0; i < starData.length; i++) {
             var s = starData[i];
-            var twk = 0.55 + 0.45 * Math.sin(now * 0.0009 + s.phase);
-            var alpha = opacity * twk;
+            var alpha = opacity * (0.55 + 0.45 * Math.sin(now * 0.0009 + s.ph));
             ctx.beginPath();
-            ctx.arc(s.xr * W, s.yr * H, s.radius, 0, Math.PI * 2);
+            ctx.arc(s.xr * W, s.yr * H, s.r, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
             ctx.fill();
         }
         ctx.restore();
     }
 
-    /* ── main draw loop ───────────────────────────────────────────── */
-    var CYCLE_MS = 90000; // 90-second full day cycle
+    /* ──  MAIN DRAW LOOP ──────────────────────────────────────── */
+    var CYCLE_MS = 90000;
     var startMs = Date.now();
+    var lastAccent = '';
 
     function draw() {
         var now = Date.now();
-        var elapsed = (now - startMs) % CYCLE_MS;
-        var progress = elapsed / CYCLE_MS;
+        var progress = ((now - startMs) % CYCLE_MS) / CYCLE_MS;
         var W = canvas.width, H = canvas.height;
 
-        // Interpolate sky keyframe
+        /* interpolate the current sky frame */
         var s = sample(SKY, progress);
         var top = lerpRGB(s.a.top, s.b.top, s.t);
+        var upr = lerpRGB(s.a.upr, s.b.upr, s.t);
+        var mid = lerpRGB(s.a.mid, s.b.mid, s.t);
+        var lwr = lerpRGB(s.a.lwr, s.b.lwr, s.t);
         var bot = lerpRGB(s.a.bot, s.b.bot, s.t);
         var sunC = lerpRGB(s.a.sunC, s.b.sunC, s.t);
         var glwC = lerpRGB(s.a.glowC, s.b.glowC, s.t);
         var stars = lerp(s.a.stars, s.b.stars, s.t);
+        var aa = s.a.atmo, ab = s.b.atmo;
+        var atmo = [Math.round(lerp(aa[0], ab[0], s.t)), Math.round(lerp(aa[1], ab[1], s.t)), Math.round(lerp(aa[2], ab[2], s.t)), lerp(aa[3], ab[3], s.t)];
 
-        // Sun position
         var sp = sunPos(progress, W, H);
 
-        // Interpolate the mid-horizon colour too
-        var mid = lerpRGB(s.a.mid, s.b.mid, s.t);
-        // Fog colour for horizon feather
-        var fogA = s.a.fog, fogB = s.b.fog;
-        var fog = [
-            Math.round(lerp(fogA[0], fogB[0], s.t)),
-            Math.round(lerp(fogA[1], fogB[1], s.t)),
-            Math.round(lerp(fogA[2], fogB[2], s.t)),
-            lerp(fogA[3], fogB[3], s.t)
-        ];
-
-        // ── 1. Sky gradient (3 stops for smooth banding-free look) ─
+        /* ── 1. 5-STOP gradient — no banding ─────────────────── */
         var grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, rgb(top));
-        grad.addColorStop(0.52, rgb(mid));  // smooth horizon blend point
+        grad.addColorStop(0.28, rgb(upr));
+        grad.addColorStop(0.50, rgb(mid));
+        grad.addColorStop(0.72, rgb(lwr));
         grad.addColorStop(1, rgb(bot));
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // ── 1b. Horizon feather / fog overlay ─────────────────────
-        // A wide, very soft radial smear at the horizon line
-        var horizY = H * 0.52;
-        var fogGrad = ctx.createRadialGradient(
-            W / 2, horizY, 0,
-            W / 2, horizY, W * 0.8
-        );
-        fogGrad.addColorStop(0, 'rgba(' + fog[0] + ',' + fog[1] + ',' + fog[2] + ',' + fog[3].toFixed(2) + ')');
-        fogGrad.addColorStop(0.5, 'rgba(' + fog[0] + ',' + fog[1] + ',' + fog[2] + ',' + (fog[3] * 0.4).toFixed(2) + ')');
-        fogGrad.addColorStop(1, 'rgba(' + fog[0] + ',' + fog[1] + ',' + fog[2] + ',0)');
-        ctx.fillStyle = fogGrad;
-        ctx.fillRect(0, horizY * 0.5, W, H - horizY * 0.5);
+        /* ── 2. THREE overlapping soft atmospheric feather layers ─
+           These dissolve any residual gradient seam completely.  */
+        var ac = atmo[0] + ',' + atmo[1] + ',' + atmo[2];
+        var a0 = atmo[3];
 
-        // ── 2. Stars ─────────────────────────────────────────────
+        // Layer A — wide ellipse above the mid point
+        var gA = ctx.createRadialGradient(W * 0.5, H * 0.36, 0, W * 0.5, H * 0.36, W * 1.0);
+        gA.addColorStop(0, 'rgba(' + ac + ',' + (a0 * 0.50).toFixed(3) + ')');
+        gA.addColorStop(0.50, 'rgba(' + ac + ',' + (a0 * 0.18).toFixed(3) + ')');
+        gA.addColorStop(1, 'rgba(' + ac + ',0)');
+        ctx.fillStyle = gA;
+        ctx.fillRect(0, 0, W, H);
+
+        // Layer B — centred exactly at mid, medium width
+        var gB = ctx.createRadialGradient(W * 0.5, H * 0.50, 0, W * 0.5, H * 0.50, W * 0.75);
+        gB.addColorStop(0, 'rgba(' + ac + ',' + (a0 * 0.42).toFixed(3) + ')');
+        gB.addColorStop(0.45, 'rgba(' + ac + ',' + (a0 * 0.15).toFixed(3) + ')');
+        gB.addColorStop(1, 'rgba(' + ac + ',0)');
+        ctx.fillStyle = gB;
+        ctx.fillRect(0, H * 0.15, W, H * 0.85);
+
+        // Layer C — wide ellipse below mid point
+        var gC = ctx.createRadialGradient(W * 0.5, H * 0.64, 0, W * 0.5, H * 0.64, W * 0.95);
+        gC.addColorStop(0, 'rgba(' + ac + ',' + (a0 * 0.38).toFixed(3) + ')');
+        gC.addColorStop(0.50, 'rgba(' + ac + ',' + (a0 * 0.12).toFixed(3) + ')');
+        gC.addColorStop(1, 'rgba(' + ac + ',0)');
+        ctx.fillStyle = gC;
+        ctx.fillRect(0, H * 0.25, W, H * 0.75);
+
+        /* ── 3. Stars ─────────────────────────────────────────── */
         drawStars(W, H, stars, now);
 
-        // ── 3. Atmospheric horizon glow (centred on where sun is) ─
-        var sunAbove = H - sp.y;            // pixels above horizon
-        var horizStr = Math.max(0, Math.min(1, sunAbove / (H * 0.25)));
-
-        var hGrad = ctx.createRadialGradient(sp.x, H * 0.92, 0, sp.x, H * 0.92, W * 0.65);
-        hGrad.addColorStop(0, rgba(glwC, 0.28 + horizStr * 0.08));
-        hGrad.addColorStop(0.5, rgba(glwC, 0.10));
-        hGrad.addColorStop(1, rgba(glwC, 0));
-        ctx.fillStyle = hGrad;
+        /* ── 4. Horizon atmospheric glow (sun-side) ───────────── */
+        var sunAbove = Math.max(0, H - sp.y);
+        var horizStr = Math.min(1, sunAbove / (H * 0.25));
+        var hG = ctx.createRadialGradient(sp.x, H * 0.92, 0, sp.x, H * 0.92, W * 0.65);
+        hG.addColorStop(0, rgba(glwC, 0.26 + horizStr * 0.08));
+        hG.addColorStop(0.5, rgba(glwC, 0.09));
+        hG.addColorStop(1, rgba(glwC, 0));
+        ctx.fillStyle = hG;
         ctx.fillRect(0, H * 0.45, W, H * 0.55);
 
-        // ── 4. Sun glow corona ────────────────────────────────────
-        if (sp.y < H + 40) {                       // only when (nearly) visible
-            var glowR = W * 0.22 + horizStr * W * 0.08;
+        /* ── 5. Sun corona + disc ──────────────────────────────── */
+        if (sp.y < H + 40) {
             var fade = Math.max(0, Math.min(1, (H + 40 - sp.y) / 80));
-            var gGrad = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, glowR);
-            gGrad.addColorStop(0, rgba(glwC, fade * 0.55));
-            gGrad.addColorStop(0.35, rgba(glwC, fade * 0.20));
-            gGrad.addColorStop(0.70, rgba(glwC, fade * 0.06));
-            gGrad.addColorStop(1, rgba(glwC, 0));
-            ctx.fillStyle = gGrad;
+            var glowR = W * 0.22 + horizStr * W * 0.08;
+            var gG = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, glowR);
+            gG.addColorStop(0, rgba(glwC, fade * 0.55));
+            gG.addColorStop(0.35, rgba(glwC, fade * 0.20));
+            gG.addColorStop(0.70, rgba(glwC, fade * 0.06));
+            gG.addColorStop(1, rgba(glwC, 0));
+            ctx.fillStyle = gG;
             ctx.fillRect(0, 0, W, H);
 
-            // ── 5. Sun disc ───────────────────────────────────────
             var sunR = Math.max(6, W * 0.030);
             ctx.beginPath();
             ctx.arc(sp.x, sp.y, sunR, 0, Math.PI * 2);
             ctx.fillStyle = rgb(sunC);
             ctx.fill();
 
-            // Inner bright highlight
-            var coreGrad = ctx.createRadialGradient(
-                sp.x - sunR * 0.2, sp.y - sunR * 0.2, 0,
-                sp.x, sp.y, sunR
-            );
-            coreGrad.addColorStop(0, 'rgba(255,255,230,0.8)');
-            coreGrad.addColorStop(1, 'rgba(255,255,230,0)');
-            ctx.fillStyle = coreGrad;
+            var cG = ctx.createRadialGradient(sp.x - sunR * 0.2, sp.y - sunR * 0.2, 0, sp.x, sp.y, sunR);
+            cG.addColorStop(0, 'rgba(255,255,230,0.8)');
+            cG.addColorStop(1, 'rgba(255,255,230,0)');
+            ctx.fillStyle = cG;
             ctx.beginPath();
             ctx.arc(sp.x, sp.y, sunR, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        // ── 6. Ground / land silhouette ───────────────────────────
+        /* ── 6. Ground vignette ────────────────────────────────── */
         var ground = ctx.createLinearGradient(0, H * 0.88, 0, H);
-        ground.addColorStop(0, rgba([0, 0, 0], 0));
-        ground.addColorStop(1, rgba([0, 0, 0], 0.55));
+        ground.addColorStop(0, 'rgba(0,0,0,0)');
+        ground.addColorStop(1, 'rgba(0,0,0,0.55)');
         ctx.fillStyle = ground;
         ctx.fillRect(0, H * 0.88, W, H * 0.12);
 
-        // ── 7. Update h1 name colour ─────────────────────────────
+        /* ── 7. h1 name colour ─────────────────────────────────── */
         if (h1) {
             var ns = sample(NAME, progress);
             var nc = lerpRGB(ns.a.c, ns.b.c, ns.t);
-            var col1 = toHex(nc);
-            // second colour slightly lighter
-            var col2 = toHex(lerpRGB(nc, [255, 255, 255], 0.3));
-            h1.style.background = 'linear-gradient(135deg,' + col1 + ' 0%,' + col2 + ' 100%)';
+            var c1 = toHex(nc);
+            var c2 = toHex(lerpRGB(nc, [255, 255, 255], 0.32));
+            h1.style.background = 'linear-gradient(135deg,' + c1 + ' 0%,' + c2 + ' 100%)';
             h1.style.webkitBackgroundClip = 'text';
             h1.style.backgroundClip = 'text';
             h1.style.webkitTextFillColor = 'transparent';
-            h1.style.filter = 'drop-shadow(0 0 10px ' + rgba(nc, 0.7) + ')';
+            h1.style.filter = 'drop-shadow(0 0 12px ' + rgba(nc, 0.75) + ')';
+        }
+
+        /* ── 8. CSS --accent variable (nav/section text) ───────── */
+        var as = sample(ACCENT, progress);
+        var ac2 = lerpRGB(as.a.c, as.b.c, as.t);
+        var acHex = toHex(ac2);
+        if (acHex !== lastAccent) {
+            lastAccent = acHex;
+            var acHex2 = toHex(lerpRGB(ac2, [255, 255, 255], 0.28));
+            var root = document.documentElement.style;
+            root.setProperty('--accent', acHex);
+            root.setProperty('--accent-g', 'linear-gradient(135deg,' + acHex + ' 0%,' + acHex2 + ' 100%)');
         }
 
         requestAnimationFrame(draw);
