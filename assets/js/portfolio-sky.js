@@ -60,24 +60,22 @@
     }
 
     /* ── sky keyframes ────────────────────────────────────────────── */
-    // p = progress [0,1] (0=dawn-left, 0.5=noon, 1=dusk-right)
-    // top/bot = sky gradient [r,g,b]
-    // sunC = sun disc colour, glowC = sun aura colour
-    // stars = star opacity multiplier
+    // Each keyframe has: top (zenith colour), mid (horizon blend colour),
+    // bot (low horizon colour), sunC, glowC, stars, fog (horizon fog rgba)
     var SKY = [
-        { p: 0.00, top: [2, 4, 18], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0 }, // deep night
-        { p: 0.07, top: [5, 6, 22], bot: [30, 10, 5], sunC: [255, 80, 0], glowC: [220, 30, 0], stars: 0.85 }, // pre-dawn
-        { p: 0.14, top: [20, 5, 35], bot: [180, 50, 0], sunC: [255, 120, 0], glowC: [255, 60, 0], stars: 0.4 }, // dawn purple+orange horizon
-        { p: 0.22, top: [80, 20, 100], bot: [255, 110, 0], sunC: [255, 185, 0], glowC: [255, 100, 0], stars: 0.0 }, // sunrise — purple sky, golden sun
-        { p: 0.30, top: [25, 80, 190], bot: [255, 140, 0], sunC: [255, 220, 80], glowC: [255, 165, 0], stars: 0.0 }, // early morning — blue sky, warm horizon
-        { p: 0.40, top: [18, 90, 200], bot: [100, 165, 255], sunC: [255, 248, 200], glowC: [255, 200, 80], stars: 0.0 },// mid-morning
-        { p: 0.50, top: [10, 80, 200], bot: [80, 160, 255], sunC: [255, 255, 240], glowC: [255, 240, 150], stars: 0.0 },// noon — bright blue sky, white sun
-        { p: 0.60, top: [15, 80, 195], bot: [90, 170, 255], sunC: [255, 235, 140], glowC: [255, 210, 80], stars: 0.0 },// afternoon
-        { p: 0.70, top: [20, 60, 160], bot: [220, 100, 10], sunC: [255, 180, 50], glowC: [255, 140, 0], stars: 0.0 },// golden hour
-        { p: 0.80, top: [60, 10, 90], bot: [200, 60, 10], sunC: [255, 100, 30], glowC: [255, 60, 0], stars: 0.1 },// sunset — purple sky, red horizon
-        { p: 0.88, top: [20, 5, 35], bot: [100, 20, 10], sunC: [200, 40, 10], glowC: [180, 20, 0], stars: 0.5 },// dusk
-        { p: 0.94, top: [4, 4, 18], bot: [15, 8, 20], sunC: [100, 20, 0], glowC: [80, 10, 0], stars: 0.85 },// twilight
-        { p: 1.00, top: [2, 4, 18], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0 }, // night again
+        { p: 0.00, top: [2, 4, 18], mid: [5, 8, 22], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0, fog: [10, 15, 40, 0.18] }, // deep night
+        { p: 0.07, top: [5, 6, 22], mid: [18, 8, 12], bot: [30, 10, 5], sunC: [255, 80, 0], glowC: [220, 30, 0], stars: 0.85, fog: [40, 20, 15, 0.20] }, // pre-dawn
+        { p: 0.14, top: [20, 5, 35], mid: [100, 28, 5], bot: [180, 50, 0], sunC: [255, 120, 0], glowC: [255, 60, 0], stars: 0.4, fog: [200, 90, 30, 0.22] }, // dawn
+        { p: 0.22, top: [80, 20, 100], mid: [180, 70, 20], bot: [255, 110, 0], sunC: [255, 185, 0], glowC: [255, 100, 0], stars: 0.0, fog: [255, 140, 60, 0.20] }, // sunrise
+        { p: 0.30, top: [25, 80, 190], mid: [160, 120, 60], bot: [255, 140, 0], sunC: [255, 220, 80], glowC: [255, 165, 0], stars: 0.0, fog: [255, 200, 120, 0.16] }, // early morning
+        { p: 0.40, top: [18, 90, 200], mid: [60, 140, 220], bot: [100, 165, 255], sunC: [255, 248, 200], glowC: [255, 200, 80], stars: 0.0, fog: [180, 220, 255, 0.12] }, // mid-morning
+        { p: 0.50, top: [10, 80, 200], mid: [50, 130, 220], bot: [80, 160, 255], sunC: [255, 255, 240], glowC: [255, 240, 150], stars: 0.0, fog: [200, 230, 255, 0.10] }, // noon
+        { p: 0.60, top: [15, 80, 195], mid: [60, 140, 225], bot: [90, 170, 255], sunC: [255, 235, 140], glowC: [255, 210, 80], stars: 0.0, fog: [200, 220, 255, 0.10] }, // afternoon
+        { p: 0.70, top: [20, 60, 160], mid: [160, 85, 20], bot: [220, 100, 10], sunC: [255, 180, 50], glowC: [255, 140, 0], stars: 0.0, fog: [255, 180, 80, 0.18] }, // golden hour
+        { p: 0.80, top: [60, 10, 90], mid: [140, 35, 10], bot: [200, 60, 10], sunC: [255, 100, 30], glowC: [255, 60, 0], stars: 0.1, fog: [255, 100, 40, 0.22] }, // sunset
+        { p: 0.88, top: [20, 5, 35], mid: [60, 15, 10], bot: [100, 20, 10], sunC: [200, 40, 10], glowC: [180, 20, 0], stars: 0.5, fog: [160, 60, 30, 0.20] }, // dusk
+        { p: 0.94, top: [4, 4, 18], mid: [10, 8, 18], bot: [15, 8, 20], sunC: [100, 20, 0], glowC: [80, 10, 0], stars: 0.85, fog: [20, 15, 35, 0.18] }, // twilight
+        { p: 1.00, top: [2, 4, 18], mid: [5, 8, 22], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0, fog: [10, 15, 40, 0.18] }, // night again
     ];
 
     /* ── name colour keyframes ────────────────────────────────────── */
@@ -157,12 +155,37 @@
         // Sun position
         var sp = sunPos(progress, W, H);
 
-        // ── 1. Sky gradient ───────────────────────────────────────
+        // Interpolate the mid-horizon colour too
+        var mid = lerpRGB(s.a.mid, s.b.mid, s.t);
+        // Fog colour for horizon feather
+        var fogA = s.a.fog, fogB = s.b.fog;
+        var fog = [
+            Math.round(lerp(fogA[0], fogB[0], s.t)),
+            Math.round(lerp(fogA[1], fogB[1], s.t)),
+            Math.round(lerp(fogA[2], fogB[2], s.t)),
+            lerp(fogA[3], fogB[3], s.t)
+        ];
+
+        // ── 1. Sky gradient (3 stops for smooth banding-free look) ─
         var grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, rgb(top));
+        grad.addColorStop(0.52, rgb(mid));  // smooth horizon blend point
         grad.addColorStop(1, rgb(bot));
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
+
+        // ── 1b. Horizon feather / fog overlay ─────────────────────
+        // A wide, very soft radial smear at the horizon line
+        var horizY = H * 0.52;
+        var fogGrad = ctx.createRadialGradient(
+            W / 2, horizY, 0,
+            W / 2, horizY, W * 0.8
+        );
+        fogGrad.addColorStop(0, 'rgba(' + fog[0] + ',' + fog[1] + ',' + fog[2] + ',' + fog[3].toFixed(2) + ')');
+        fogGrad.addColorStop(0.5, 'rgba(' + fog[0] + ',' + fog[1] + ',' + fog[2] + ',' + (fog[3] * 0.4).toFixed(2) + ')');
+        fogGrad.addColorStop(1, 'rgba(' + fog[0] + ',' + fog[1] + ',' + fog[2] + ',0)');
+        ctx.fillStyle = fogGrad;
+        ctx.fillRect(0, horizY * 0.5, W, H - horizY * 0.5);
 
         // ── 2. Stars ─────────────────────────────────────────────
         drawStars(W, H, stars, now);
