@@ -1,7 +1,6 @@
 /**
- * portfolio-sky.js — Dynamic day/night sky cycle v5.0
- * 5-stop banding-free gradient + 3 atmospheric feather layers.
- * Twinkling stars, shooting stars during dawn, live CSS accent var.
+ * portfolio-sky.js — Dynamic day/night sky cycle v6.0
+ * Graceful star drift with streak trails during dawn/dusk transitions.
  */
 (function () {
     'use strict';
@@ -46,7 +45,6 @@
     }
 
     /* ── sky keyframes ─────────────────────────────────────────── */
-    // top=zenith  upr=25%  mid=horizon  lwr=75%  bot=ground
     var SKY = [
         { p: 0.00, top: [2, 4, 18], upr: [4, 6, 20], mid: [6, 8, 22], lwr: [7, 9, 23], bot: [8, 10, 25], sunC: [255, 80, 0], glowC: [255, 40, 0], stars: 1.0, atmo: [20, 25, 55, 0.14] },
         { p: 0.07, top: [5, 6, 22], upr: [10, 7, 18], mid: [20, 10, 10], lwr: [25, 10, 8], bot: [30, 10, 5], sunC: [255, 80, 0], glowC: [220, 30, 0], stars: 0.85, atmo: [50, 30, 18, 0.16] },
@@ -83,139 +81,100 @@
         { p: 1.00, c: [60, 100, 200] },
     ];
 
-    /* ── background twinkling stars ────────────────────────────── */
+    /* ── background stars (fixed base positions) ───────────────── */
     var bgStars = [];
     for (var i = 0; i < 220; i++) {
-        bgStars.push({ xr: Math.random(), yr: Math.random() * 0.78, r: Math.random() * 1.4 + 0.3, ph: Math.random() * Math.PI * 2 });
+        bgStars.push({
+            xr: Math.random(),              // x as fraction of W
+            yr: Math.random() * 0.78,       // y in top 78%
+            r: Math.random() * 1.4 + 0.3, // radius
+            ph: Math.random() * Math.PI * 2,// twinkle phase
+            // drift angle unique per star: mostly upward, slightly fanned
+            // fan spread: ±20° from vertical, determined by x position
+            fanRad: (Math.random() - 0.5) * 0.7,  // -0.35 to +0.35 rad fan
+        });
     }
 
-    function drawBgStars(W, H, opacity, now) {
+    /* ── drift strength function ───────────────────────────────── */
+    // Returns [0,1] bell curve:
+    //   · Dawn  window: progress 0.05 → 0.24  (sun rising from left)
+    //   · Dusk  window: progress 0.80 → 0.96  (stars re-emerging)
+    function driftStrength(progress) {
+        // Dawn — stars gently drift upward as sun pushes them
+        if (progress >= 0.05 && progress <= 0.24) {
+            var t = (progress - 0.05) / 0.19;
+            return Math.sin(t * Math.PI);        // smooth 0→1→0
+        }
+        // Dusk — stars settle back in as night falls (smaller effect)
+        if (progress >= 0.80 && progress <= 0.96) {
+            var t2 = (progress - 0.80) / 0.16;
+            return Math.sin(t2 * Math.PI) * 0.45; // weaker settling effect
+        }
+        return 0;
+    }
+
+    /* ── star drift offset at a given progress ─────────────────── */
+    // Returns the pixel displacement (dx, dy) for a star at this progress.
+    // Direction: upward + slight fan based on star's x position.
+    function starDrift(s, drift, W, H) {
+        if (drift < 0.001) return { dx: 0, dy: 0 };
+        var mag = drift * W * 0.028;        // max ~2.8% of screen width
+        var angle = -Math.PI / 2 + s.fanRad;  // up ± fan
+        return {
+            dx: Math.cos(angle) * mag,
+            dy: Math.sin(angle) * mag,           // negative = upward
+        };
+    }
+
+    /* ── draw stars with optional drift streaks ────────────────── */
+    function drawStars(W, H, opacity, drift, now) {
         if (opacity < 0.01) return;
         ctx.save();
+
+        // Streak length in ms-equivalent of progress:
+        // We want to know where star was epsilon back in progress
+        // streak = drift offset difference between progress and (progress - dp)
+        // dp chosen so streak = ~6-18px at peak drift
+        var streakMultiplier = 22; // pixels of streak at full drift
+
         for (var i = 0; i < bgStars.length; i++) {
             var s = bgStars[i];
-            var alpha = opacity * (0.55 + 0.45 * Math.sin(now * 0.0009 + s.ph));
+            var twk = 0.55 + 0.45 * Math.sin(now * 0.0009 + s.ph);
+            var alpha = opacity * twk;
+            if (alpha < 0.01) continue;
+
+            // Current position (with drift offset)
+            var d = starDrift(s, drift, W, H);
+            var cx = s.xr * W + d.dx;
+            var cy = s.yr * H + d.dy;
+
+            if (drift > 0.02) {
+                // ── Draw streak trail ─────────────────────────────
+                var str = drift * streakMultiplier;
+                var ang = -Math.PI / 2 + s.fanRad;
+                // Tail is behind the star (opposite drift direction)
+                var tx = cx - Math.cos(ang) * str;
+                var ty = cy - Math.sin(ang) * str;
+
+                var streak = ctx.createLinearGradient(tx, ty, cx, cy);
+                streak.addColorStop(0, 'rgba(255,255,255,0)');
+                streak.addColorStop(0.5, 'rgba(255,255,255,' + (alpha * 0.18).toFixed(2) + ')');
+                streak.addColorStop(1, 'rgba(255,255,255,' + (alpha * 0.55).toFixed(2) + ')');
+
+                ctx.beginPath();
+                ctx.moveTo(tx, ty);
+                ctx.lineTo(cx, cy);
+                ctx.strokeStyle = streak;
+                ctx.lineWidth = s.r * 0.9;
+                ctx.stroke();
+            }
+
+            // ── Draw star dot ─────────────────────────────────────
             ctx.beginPath();
-            ctx.arc(s.xr * W, s.yr * H, s.r, 0, Math.PI * 2);
+            ctx.arc(cx, cy, s.r, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
             ctx.fill();
         }
-        ctx.restore();
-    }
-
-    /* ── SHOOTING STAR SYSTEM ──────────────────────────────────── */
-    var shooters = [];   // active shooting stars
-    var nextShoot = 0;  // timestamp for next spawn attempt
-
-    function spawnShooter(W, H) {
-        // Diagonal angle: 20-55° from horizontal, always heading downward
-        var angleDeg = 20 + Math.random() * 35;
-        var angle = angleDeg * Math.PI / 180;
-        var dir = Math.random() < 0.65 ? 1 : -1; // 65% rightward, 35% leftward
-
-        // Pixels per second (at 60fps → per-ms)
-        var speed = (W * 0.45 + Math.random() * W * 0.30) / 1000; // ~45-75% W per second
-
-        // Tail length in pixels
-        var tailPx = 90 + Math.random() * 130;
-
-        // Slight blue/white/yellow tint
-        var tints = [[255, 255, 255], [220, 240, 255], [255, 250, 220], [200, 220, 255]];
-        var col = tints[Math.floor(Math.random() * tints.length)];
-
-        shooters.push({
-            x: W * (0.05 + Math.random() * 0.90),
-            y: H * (Math.random() * 0.42),      // spawn in upper 42%
-            vxms: Math.cos(angle) * speed * dir,   // px/ms
-            vyms: Math.sin(angle) * speed,         // px/ms (always +ve = down)
-            tailPx: tailPx,
-            col: col,
-            ageMs: 0,
-            maxMs: 700 + Math.random() * 900,       // 0.7–1.6 sec lifetime
-        });
-    }
-
-    function drawShooters(W, H, starsOpacity, progress, dt) {
-        // ── Spawn logic ───────────────────────────────────────────
-        // Base rate during night; burst rate during dawn (sun starting to rise)
-        var spawnProb = 0;
-        if (starsOpacity > 0.05) {
-            // Night base: 1.5 chance per second → ~0.0015 per ms * dt
-            spawnProb = starsOpacity * 0.0015 * dt;
-
-            // DAWN BURST: progress 0.05 → 0.28 (sun just rising)
-            if (progress > 0.05 && progress < 0.28) {
-                // Peaks at progress ~0.14 (just as sun clears horizon)
-                var dawnPhase = (progress - 0.05) / 0.23; // 0-1 over the window
-                var burst = Math.sin(dawnPhase * Math.PI); // smooth bell curve
-                spawnProb += burst * 0.008 * dt;            // up to ~8 per sec burst
-            }
-
-            // DUSK FADE: progress 0.82-0.92 — a few falling stars as stars re-appear
-            if (progress > 0.82 && progress < 0.94) {
-                var duskPhase = (progress - 0.82) / 0.12;
-                var dusk = Math.sin(duskPhase * Math.PI);
-                spawnProb += dusk * 0.003 * dt;
-            }
-        }
-
-        if (Math.random() < spawnProb && shooters.length < 6) {
-            spawnShooter(W, H);
-        }
-
-        // ── Update & draw ─────────────────────────────────────────
-        if (shooters.length === 0) return;
-        ctx.save();
-
-        shooters = shooters.filter(function (ss) {
-            ss.ageMs += dt;
-            if (ss.ageMs >= ss.maxMs) return false;
-
-            var t = ss.ageMs / ss.maxMs;                   // 0→1 in life
-            var alpha = t < 0.65 ? 1 : 1 - (t - 0.65) / 0.35; // hold bright, fade out
-
-            // Current head position
-            var hx = ss.x + ss.vxms * ss.ageMs;
-            var hy = ss.y + ss.vyms * ss.ageMs;
-
-            // Tail root — clamp tail so it doesn't go before the star was born
-            var tLen = Math.min(ss.tailPx, Math.hypot(ss.vxms, ss.vyms) * ss.ageMs);
-            var norm = Math.hypot(ss.vxms, ss.vyms);
-            var tailDx = (ss.vxms / norm) * tLen;
-            var tailDy = (ss.vyms / norm) * tLen;
-            var tx = hx - tailDx;
-            var ty = hy - tailDy;
-
-            // ── Tail gradient line ──────────────────────────────
-            var tailGrad = ctx.createLinearGradient(tx, ty, hx, hy);
-            tailGrad.addColorStop(0, 'rgba(' + ss.col[0] + ',' + ss.col[1] + ',' + ss.col[2] + ',0)');
-            tailGrad.addColorStop(0.55, 'rgba(' + ss.col[0] + ',' + ss.col[1] + ',' + ss.col[2] + ',' + (alpha * 0.25).toFixed(2) + ')');
-            tailGrad.addColorStop(1, 'rgba(' + ss.col[0] + ',' + ss.col[1] + ',' + ss.col[2] + ',' + (alpha * 0.85).toFixed(2) + ')');
-
-            ctx.beginPath();
-            ctx.moveTo(tx, ty);
-            ctx.lineTo(hx, hy);
-            ctx.strokeStyle = tailGrad;
-            ctx.lineWidth = 1.8;
-            ctx.stroke();
-
-            // ── Head glow halo ──────────────────────────────────
-            var hGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, 5);
-            hGrad.addColorStop(0, 'rgba(' + ss.col[0] + ',' + ss.col[1] + ',' + ss.col[2] + ',' + (alpha * 0.95).toFixed(2) + ')');
-            hGrad.addColorStop(1, 'rgba(' + ss.col[0] + ',' + ss.col[1] + ',' + ss.col[2] + ',0)');
-            ctx.fillStyle = hGrad;
-            ctx.beginPath();
-            ctx.arc(hx, hy, 5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // ── Bright core dot ─────────────────────────────────
-            ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.92).toFixed(2) + ')';
-            ctx.beginPath();
-            ctx.arc(hx, hy, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            return true;
-        });
 
         ctx.restore();
     }
@@ -229,17 +188,14 @@
     /* ── MAIN DRAW LOOP ────────────────────────────────────────── */
     var CYCLE_MS = 90000;
     var startMs = Date.now();
-    var lastMs = Date.now();
     var lastAccent = '';
 
     function draw() {
         var now = Date.now();
-        var dt = clamp(now - lastMs, 1, 100); // ms since last frame, capped
-        lastMs = now;
         var progress = ((now - startMs) % CYCLE_MS) / CYCLE_MS;
         var W = canvas.width, H = canvas.height;
 
-        /* ── interpolate frame ───────────────────────────────────── */
+        /* interpolate current sky frame */
         var s = sample(SKY, progress);
         var top = lerpRGB(s.a.top, s.b.top, s.t);
         var upr = lerpRGB(s.a.upr, s.b.upr, s.t);
@@ -255,8 +211,9 @@
         Math.round(lerp(aa[2], ab[2], s.t)),
         lerp(aa[3], ab[3], s.t)];
         var sp = sunPos(progress, W, H);
+        var drift = driftStrength(progress);
 
-        /* ── 1. 5-stop banding-free gradient ─────────────────────── */
+        /* ── 1. 5-stop banding-free sky gradient ──────────────── */
         var grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, rgb(top));
         grad.addColorStop(0.28, rgb(upr));
@@ -266,14 +223,13 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        /* ── 2. Three stacked atmospheric feather layers ─────────── */
+        /* ── 2. Three stacked atmospheric feather layers ──────── */
         var ac = atmo[0] + ',' + atmo[1] + ',' + atmo[2];
         var a0 = atmo[3];
-
-        function radLayer(cy, radius, alphaScale) {
+        function radLayer(cy, radius, s2) {
             var g = ctx.createRadialGradient(W * 0.5, cy, 0, W * 0.5, cy, radius);
-            g.addColorStop(0, 'rgba(' + ac + ',' + (a0 * alphaScale * 0.95).toFixed(3) + ')');
-            g.addColorStop(0.45, 'rgba(' + ac + ',' + (a0 * alphaScale * 0.35).toFixed(3) + ')');
+            g.addColorStop(0, 'rgba(' + ac + ',' + (a0 * s2 * 0.95).toFixed(3) + ')');
+            g.addColorStop(0.45, 'rgba(' + ac + ',' + (a0 * s2 * 0.35).toFixed(3) + ')');
             g.addColorStop(1, 'rgba(' + ac + ',0)');
             ctx.fillStyle = g;
             ctx.fillRect(0, 0, W, H);
@@ -282,13 +238,10 @@
         radLayer(H * 0.50, W * 0.75, 0.42);
         radLayer(H * 0.64, W * 0.95, 0.38);
 
-        /* ── 3. Background twinkling stars ───────────────────────── */
-        drawBgStars(W, H, stars, now);
+        /* ── 3. Stars with graceful drift streaks ─────────────── */
+        drawStars(W, H, stars, drift, now);
 
-        /* ── 4. Shooting stars (with dawn burst) ─────────────────── */
-        drawShooters(W, H, stars, progress, dt);
-
-        /* ── 5. Horizon atmospheric glow (sun-side) ──────────────── */
+        /* ── 4. Horizon atmospheric glow (sun-side) ───────────── */
         var sunAbove = Math.max(0, H - sp.y);
         var horizStr = clamp(sunAbove / (H * 0.25), 0, 1);
         var hG = ctx.createRadialGradient(sp.x, H * 0.92, 0, sp.x, H * 0.92, W * 0.65);
@@ -298,7 +251,7 @@
         ctx.fillStyle = hG;
         ctx.fillRect(0, H * 0.45, W, H * 0.55);
 
-        /* ── 6. Sun corona + disc ────────────────────────────────── */
+        /* ── 5. Sun corona + disc ─────────────────────────────── */
         if (sp.y < H + 40) {
             var fade = clamp((H + 40 - sp.y) / 80, 0, 1);
             var glowR = W * 0.22 + horizStr * W * 0.08;
@@ -325,14 +278,14 @@
             ctx.fill();
         }
 
-        /* ── 7. Ground vignette ──────────────────────────────────── */
+        /* ── 6. Ground vignette ───────────────────────────────── */
         var gnd = ctx.createLinearGradient(0, H * 0.88, 0, H);
         gnd.addColorStop(0, 'rgba(0,0,0,0)');
         gnd.addColorStop(1, 'rgba(0,0,0,0.55)');
         ctx.fillStyle = gnd;
         ctx.fillRect(0, H * 0.88, W, H * 0.12);
 
-        /* ── 8. h1 name colour ───────────────────────────────────── */
+        /* ── 7. h1 name colour ────────────────────────────────── */
         if (h1) {
             var ns = sample(NAME, progress);
             var nc = lerpRGB(ns.a.c, ns.b.c, ns.t);
@@ -344,7 +297,7 @@
             h1.style.filter = 'drop-shadow(0 0 12px ' + rgba(nc, 0.75) + ')';
         }
 
-        /* ── 9. CSS --accent var (nav/section text) ──────────────── */
+        /* ── 8. CSS --accent var ──────────────────────────────── */
         var as = sample(ACCENT, progress);
         var ac2 = lerpRGB(as.a.c, as.b.c, as.t);
         var acHex = toHex(ac2);
