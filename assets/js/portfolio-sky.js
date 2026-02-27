@@ -16,6 +16,8 @@
     var h1 = document.querySelector('#header .content .inner h1');
     var bgDiv = document.getElementById('bg');
     if (bgDiv) bgDiv.style.display = 'none';
+    var navLinks = document.querySelectorAll('#header nav ul li a');
+    var sectionHeadings = document.querySelectorAll('#main article h2.major');
 
     function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize);
@@ -79,6 +81,25 @@
         { p: 0.65, c: [255, 215, 60] }, { p: 0.76, c: [255, 165, 20] },
         { p: 0.84, c: [255, 90, 30] }, { p: 0.92, c: [180, 50, 20] },
         { p: 1.00, c: [60, 100, 200] },
+    ];
+
+    /* ── nav title / section heading colour keyframes ──────────── */
+    // Goal: always contrast against the sky — bright on dark sky,
+    // warm/golden during day, vivid during transitions.
+    var NAV_TITLE = [
+        { p: 0.00, c: [140, 180, 255], glow: [80, 130, 255] },   // deep night — cool blue-white glow
+        { p: 0.07, c: [255, 160, 60], glow: [255, 80, 0] },   // pre-dawn — ember orange
+        { p: 0.14, c: [255, 200, 80], glow: [255, 120, 0] },   // dawn — warm golden
+        { p: 0.22, c: [255, 230, 120], glow: [255, 160, 0] },   // sunrise — bright gold
+        { p: 0.30, c: [255, 245, 180], glow: [255, 200, 60] },   // early morning — pale yellow
+        { p: 0.40, c: [255, 255, 220], glow: [200, 240, 255] },  // mid-morning — warm white
+        { p: 0.50, c: [255, 252, 210], glow: [255, 245, 150] },  // noon — bright warm-white
+        { p: 0.60, c: [255, 240, 160], glow: [255, 210, 80] },  // afternoon — golden
+        { p: 0.70, c: [255, 200, 80], glow: [255, 160, 20] },  // golden hour — amber
+        { p: 0.80, c: [255, 150, 60], glow: [255, 80, 20] },  // sunset — deep orange
+        { p: 0.88, c: [200, 100, 60], glow: [180, 40, 10] },  // dusk — reddish
+        { p: 0.94, c: [120, 150, 230], glow: [80, 100, 200] },  // twilight — blue transition
+        { p: 1.00, c: [140, 180, 255], glow: [80, 130, 255] },  // night — cool blue-white
     ];
 
     /* ── background stars (fixed base positions) ───────────────── */
@@ -189,6 +210,7 @@
     var CYCLE_MS = 90000;
     var startMs = Date.now();
     var lastAccent = '';
+    var lastNavHex = '';
 
     function draw() {
         var now = Date.now();
@@ -307,6 +329,27 @@
             var root = document.documentElement.style;
             root.setProperty('--accent', acHex);
             root.setProperty('--accent-g', 'linear-gradient(135deg,' + acHex + ' 0%,' + acHex2 + ' 100%)');
+        }
+
+        /* ── 9. Nav link + section heading dynamic colours ────── */
+        var nt = sample(NAV_TITLE, progress);
+        var ntc = lerpRGB(nt.a.c, nt.b.c, nt.t);
+        var ntg = lerpRGB(nt.a.glow, nt.b.glow, nt.t);
+        var ntHex = toHex(ntc);
+        if (ntHex !== lastNavHex) {
+            lastNavHex = ntHex;
+            var ntGlowRgba = rgba(ntg, 0.70);
+            var ntShadow = '0 0 10px ' + ntGlowRgba + ', 0 0 22px ' + rgba(ntg, 0.35);
+            var ntStyle = 'color:' + ntHex + ';text-shadow:' + ntShadow + ';transition:color .8s,text-shadow .8s;';
+            for (var ni = 0; ni < navLinks.length; ni++) {
+                navLinks[ni].style.cssText = ntStyle;
+            }
+            /* section headings inside phone panels get a subtler tint */
+            var hStyle = 'color:' + ntHex + '!important;border-bottom-color:' + ntHex + '!important;' +
+                'text-shadow:0 0 8px ' + rgba(ntg, 0.50) + ';transition:color .8s,border-color .8s,text-shadow .8s;';
+            for (var hi = 0; hi < sectionHeadings.length; hi++) {
+                sectionHeadings[hi].style.cssText = hStyle;
+            }
         }
 
         requestAnimationFrame(draw);
